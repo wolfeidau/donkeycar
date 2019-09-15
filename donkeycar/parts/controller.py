@@ -1273,6 +1273,63 @@ class WiiUController(JoystickController):
             'RIGHT_STICK_Y' : self.set_throttle,
         }
 
+class DingoGamepad(Joystick):
+    #An interface to a physical joystick available at /dev/input/js0
+    #This is based on the work at https://github.com/wolfeidau/esp32-hid-joystick/ to build a BLE based
+    #opensource joystick.
+    def __init__(self, *args, **kwargs):
+        super(DingoGamepad, self).__init__(*args, **kwargs)
+
+        self.button_names = {
+            304: 'RIGHT_PAD_UP',
+            305: 'RIGHT_PAD_RIGHT',
+            306: 'RIGHT_PAD_DOWN',
+            307: 'RIGHT_PAD_LEFT',
+            308: 'LEFT_PAD_UP',
+            309: 'LEFT_PAD_RIGHT',
+            310: 'LEFT_PAD_DOWN',
+            311: 'LEFT_PAD_LEFT',
+            312: 'TOP_LEFT',
+            313: 'TOP_RIGHT',
+        }
+
+        self.axis_names = {
+            0: 'LEFT_STICK_X',
+            1: 'LEFT_STICK_Y',
+            2: 'RIGHT_STICK_X',
+            3: 'RIGHT_STICK_Y',
+        }
+
+class DingoGamepadController(JoystickController):
+    #A Controller object that maps inputs to actions
+    def __init__(self, *args, **kwargs):
+        super(DingoGamepadController, self).__init__(*args, **kwargs)
+
+
+    def init_js(self):
+        #attempt to init joystick
+        try:
+            self.js = DingoGamepad(self.dev_fn)
+            self.js.init()
+        except FileNotFoundError:
+            print(self.dev_fn, "not found.")
+            self.js = None
+        return self.js is not None
+
+
+    def init_trigger_maps(self):
+        #init set of mapping from buttons to function calls
+
+        self.button_down_trigger_map = {
+            'TOP_LEFT' : self.erase_last_N_records,
+            'TOP_RIGHT' : self.toggle_mode,
+        }
+
+        self.axis_trigger_map = {
+            'RIGHT_STICK_X' : self.set_steering,
+            'LEFT_STICK_Y' : self.set_throttle,
+        }
+
 
 
 class RC3ChanJoystickController(JoystickController):
@@ -1418,6 +1475,8 @@ def get_js_controller(cfg):
         cont_class = LogitechJoystickController
     elif cfg.CONTROLLER_TYPE == "rc3":
         cont_class = RC3ChanJoystickController
+    elif cfg.CONTROLLER_TYPE == "dingogamepad":
+        cont_class = DingoGamepadController
     else:
         raise("Unknown controller type: " + cfg.CONTROLLER_TYPE)
 
