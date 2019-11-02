@@ -30,7 +30,7 @@ class SalientVis():
         return image
 
     def init_salient(self, model):
-        img_in = Input(shape=(120, 160, 3), name='img_in')
+        img_in = Input(shape=(224, 224, 3), name='img_in')
         x = img_in
         x = Convolution2D(24, (5,5), strides=(2,2), activation='relu', name='conv1')(x)
         x = Convolution2D(32, (5,5), strides=(2,2), activation='relu', name='conv2')(x)
